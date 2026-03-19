@@ -20,6 +20,7 @@ class SceneGraphApp(App):
         self.widget0.styles.width="2fr"
         self.widget.styles.width="1fr"
         self.collapsed_nodes = set()
+        self._last_tree_data = None
         self.fetch_tree_data()
         self.set_interval(0.5, self.fetch_tree_data)
 
@@ -28,6 +29,9 @@ class SceneGraphApp(App):
             # This will run asyncio.run() in its own thread
             c = InteractiveCommandClient()
             tree_data = c.core.stacking_info()
+            if tree_data == self._last_tree_data:
+                return
+            self._last_tree_data = tree_data
             window_data = c.windows()
             internal_window_data = c.internal_windows()
             self.call_from_thread(self.update_tree, tree_data, window_data, internal_window_data)
