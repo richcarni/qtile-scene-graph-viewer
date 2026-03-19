@@ -19,8 +19,9 @@ class SceneGraphApp(App):
     async def on_mount(self):
         self.widget0.styles.width="2fr"
         self.widget.styles.width="1fr"
+        self.collapsed_nodes = set()
         self.fetch_tree_data()
-        self.set_interval(1.0, self.fetch_tree_data)
+        self.set_interval(0.5, self.fetch_tree_data)
 
     def fetch_tree_data(self) -> None:
         def background_task():
@@ -52,6 +53,13 @@ class SceneGraphApp(App):
             text = f"{node['type']}{'' if node['enabled'] else ' [✘]'}{'' if not node['name'] else f' ({node.get("name")})'}"
 
             new_node = parent.add(text, data=(node, window), expand=True)
+
+            node_id = node.get('id');
+            if node_id in self.collapsed_nodes:
+                new_node.collapse()
+            else:
+                new_node.expand()
+
             for child in node.get("children", []):
                 insert(child, new_node)
 
@@ -87,6 +95,21 @@ class SceneGraphApp(App):
             details.update(text + ('' if node_data['wid'] is None else view_text))
         else:
             details.update("No info")
+
+    def on_tree_node_expanded(self, event: Tree.NodeExpanded):
+        if not event.node.data:
+            return
+
+        node_id = event.node.data[0].get("id")
+        if node_id:
+            self.collapsed_nodes.discard(node_id)
+
+    def on_tree_node_collapsed(self, event: Tree.NodeCollapsed):
+        if not event.node.data:
+            return
+        node_id = event.node.data[0].get("id")
+        if node_id:
+            self.collapsed_nodes.add(node_id)
 
 if __name__ == "__main__":
     SceneGraphApp().run()
